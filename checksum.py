@@ -1,12 +1,20 @@
 class checksum_input:
-    def __init__(self, dir='input.dat', stuff_bit=16):
-        inputfile = open(dir, 'r')
-        raw = inputfile.read().upper()
-        inputfile.close()
+    def __init__(self, raw, stuff_bit=16):
         self.stuff_bit = stuff_bit
-        self.raw = raw
+        self.raw = ''
+        for i in filter(self.filter_word, raw):
+            self.raw += i
         self.stuffed = self.bitstuffing(raw=self.raw, stuff_bit=self.stuff_bit)
         self.exported = self.export_16bit()
+
+    @staticmethod
+    def filter_word(character):
+        NUMBERS = ['a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F',
+                   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        if (character in NUMBERS):
+            return True
+        else:
+            return False
 
     def bitstuffing(self, raw=None, stuff_bit=None):
         if stuff_bit is None:
@@ -24,9 +32,9 @@ class checksum_input:
     def export_16bit(self):
         raw = str(self)
         exported = list()
-        for i in range(int(len(raw) / (self.stuff_bit / 4)) - 1):
+        for i in range(int(len(raw) / (self.stuff_bit / 4))):
             token = raw[int(i * (self.stuff_bit / 4)): int((i + 1) * (self.stuff_bit / 4))]
-            exported.append(token)
+            exported.append(checksum_number(raw=token, stuff_bit = self.stuff_bit))
         return exported
 
     def __str__(self):
@@ -34,7 +42,8 @@ class checksum_input:
 
 
 class bittoken:
-    def __init__(self, raw):
+    def __init__(self, raw=0, stuff_bit=16):
+        self.stuff_bit = stuff_bit
         if type(raw) is type(str()):
             self.rawstr = raw.lstrip("0x").lstrip("0")
             self.data = self.export(mode='int', data=raw)
@@ -65,20 +74,20 @@ class bittoken:
 class checksum_number(bittoken):
     def __add__(self, other):
         new = checksum_number(self.data + other.data)
-        if len(str(new)) > 4: # Carry
-            carrier = checksum_number(str(new)[:-4])
-            new = checksum_number(str(new)[-4:])
+        if len(str(new)) > 4:  # Carry
+            carrier = checksum_number(str(new)[:-1 * int(self.stuff_bit / 4)])
+            new = checksum_number(str(new)[-1 * int(self.stuff_bit / 4):])
             return new + carrier
         return checksum_number(self.data + other.data)
 
 
 class checksum:
     def __init__(self, raw, stuff_bit=16):
-        self.raw = raw
+        self.raw_input = checksum_input(raw, stuff_bit=stuff_bit)
         self.stuff_bit = stuff_bit
 
     @staticmethod
-    def getchecksum(data, stuff_bit):
+    def getchecksum(data):
         cs = ''
         return cs
 
@@ -87,10 +96,14 @@ if __name__ == "__main__":
     stuff_bit = 16
     input_dir = 'input.dat'
 
-    input_raw = checksum_input(dir=input_dir, stuff_bit=stuff_bit)
-    exported = input_raw.export_16bit()
-    # tmp = [token_16bit(exported[0]), token_16bit(exported[1])]
-    btmp = [checksum_number('8888'), checksum_number('9999')]
-    newbtmp = btmp[1] + btmp[0]
-    # tmpp = [tmp[0].export(mode='int'), tmp[1].export(mode='hexstr')]
+    inputfile = open(input_dir, 'r')
+    raw = inputfile.read().upper()
+    inputfile.close()
+
+    input_class = checksum_input(raw=raw, stuff_bit=stuff_bit)
+    exported = input_class.export_16bit()
+    cs_sum = checksum_number()
+    for i in exported:
+        cs_sum += i
+
     print()
