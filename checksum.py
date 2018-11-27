@@ -11,7 +11,7 @@ class checksum_input:
     def filter_word(character):
         NUMBERS = ['a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F',
                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        if (character in NUMBERS):
+        if character in NUMBERS:
             return True
         else:
             return False
@@ -34,7 +34,7 @@ class checksum_input:
         exported = list()
         for i in range(int(len(raw) / (self.stuff_bit / 4))):
             token = raw[int(i * (self.stuff_bit / 4)): int((i + 1) * (self.stuff_bit / 4))]
-            exported.append(checksum_number(raw=token, stuff_bit = self.stuff_bit))
+            exported.append(checksum_number(raw=token, stuff_bit=self.stuff_bit))
         return exported
 
     def __str__(self):
@@ -83,27 +83,47 @@ class checksum_number(bittoken):
 
 class checksum:
     def __init__(self, raw, stuff_bit=16):
-        self.raw_input = checksum_input(raw, stuff_bit=stuff_bit)
+        self.raw_input_class = checksum_input(raw, stuff_bit=stuff_bit)
         self.stuff_bit = stuff_bit
+        self.sum = checksum_number()
+        self.cs = self.getchecksum(self.raw_input_class.exported)
 
-    @staticmethod
-    def getchecksum(data):
-        cs = ''
+    def getchecksum(self, data):
+        cs = checksum_number()
+        for i in data:
+            cs += i
+        self.sum = checksum_number(cs.data)
+        cs = checksum_number(int("FFFF", 16) ^ cs.data)
         return cs
+
+    def export(self):
+        return {'data': str(self.raw_input_class.raw), 'sum': str(self.sum), 'checksum': str(self.cs)}
 
 
 if __name__ == "__main__":
-    stuff_bit = 16
+    # Basic Settings
     input_dir = 'input.dat'
+    stuff_bit = 16
 
+    # Input Data
     inputfile = open(input_dir, 'r')
     raw = inputfile.read().upper()
     inputfile.close()
 
-    input_class = checksum_input(raw=raw, stuff_bit=stuff_bit)
-    exported = input_class.export_16bit()
-    cs_sum = checksum_number()
-    for i in exported:
-        cs_sum += i
+    # Get Checksum
+    cs_class = checksum(raw=raw, stuff_bit=stuff_bit)
+    cs = cs_class.export()
+    print(cs)
+
+    # Validation
+    from validation import valid_check
+    is_valid = valid_check(data=cs, stuff_bit=stuff_bit)
+    print(is_valid)
+
+    # input_class = checksum_input(raw=raw, stuff_bit=stuff_bit)
+    # exported = input_class.export_16bit()
+    # cs_sum = checksum_number()
+    # for i in exported:
+    #     cs_sum += i
 
     print()
