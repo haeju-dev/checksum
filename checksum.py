@@ -93,7 +93,7 @@ class checksum:
         for i in data:
             cs += i
         self.sum = checksum_number(cs.data)
-        cs = checksum_number(int("FFFF", 16) ^ cs.data)
+        cs = checksum_number(int("F" * int(self.stuff_bit / 4), self.stuff_bit) ^ cs.data)
         return cs
 
     def export(self):
@@ -117,6 +117,7 @@ if __name__ == "__main__":
 
     # Validation
     from validation import valid_check
+
     is_valid = valid_check(data=cs, stuff_bit=stuff_bit)
     print(is_valid)
 

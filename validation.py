@@ -8,7 +8,7 @@ def valid_check(data, stuff_bit=16):
     for i in input_class.exported:
         sum += i
     sum += checksum_number(data['checksum'])
-    cs = sum.data ^ int("FFFF", 16)
+    cs = sum.data ^ int("F" * int(stuff_bit / 4), stuff_bit)
     return not cs
 
 
